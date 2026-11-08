@@ -26,14 +26,26 @@ jobs:
         run: |
           brew install automake libtool pkg-config libffi
 
-      - name: Build with Buildozer
+      - name: Build Xcode Project with Buildozer
         run: |
+          # Собираем только проект Xcode без финальной упаковки buildozer'ом
           buildozer ios debug
-        env:
-          ENABLE_BITCODE: "NO"
+        continue-on-error: true
+
+      - name: Compile IPA via Xcode CLI
+        run: |
+          # Ищем сгенерированный проект xcode и собираем .ipa напрямую через xcodebuild
+          cd .buildozer/ios/platform/kivy-ios/
+          cd *-ios
+          xcodebuild -project *.xcodeproj -scheme * -configuration Debug -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO clean build
+          
+          # Упаковываем скомпилированное приложение .app в архив .ipa
+          mkdir -p Payload
+          cp -r build/Debug-iphoneos/*.app Payload/
+          zip -r ../../../../FuckPhone.ipa Payload/
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: FuckPhone-iOS-IPA
-          path: ./.buildozer/ios/platform/kivy-ios/dist/apps/*.ipa
+          path: FuckPhone.ipa
