@@ -2,12 +2,12 @@ name: Build iOS IPA
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-14  # Запуск на официальном ARM Mac от GitHub
+    runs-on: macos-14
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,10 +28,8 @@ jobs:
 
       - name: Build with Buildozer
         run: |
-          # Команда компиляции только проекта под iOS
           buildozer ios debug
         env:
-          # Игнорируем требования подписи для дебаг-сборки (подпишем через TrollStore/AltStore сами)
           ENABLE_BITCODE: "NO"
 
       - name: Upload IPA Artifact
