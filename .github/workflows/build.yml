@@ -1,0 +1,41 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14  # Запуск на официальном ARM Mac от GitHub
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install buildozer kivy-ios
+
+      - name: Install System Dependencies
+        run: |
+          brew install automake libtool pkg-config libffi
+
+      - name: Build with Buildozer
+        run: |
+          # Команда компиляции только проекта под iOS
+          buildozer ios debug
+        env:
+          # Игнорируем требования подписи для дебаг-сборки (подпишем через TrollStore/AltStore сами)
+          ENABLE_BITCODE: "NO"
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FuckPhone-iOS-IPA
+          path: ./.buildozer/ios/platform/kivy-ios/dist/apps/*.ipa
